@@ -20,13 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 """
-`Adafruit_SI5351`
+`adafruit_si5351`
 ====================================================
 
 CircuitPython module to control the SI5351 clock generator.  See
 examples/simpletest.py for a demo of the usage.  This is based on the Arduino
-library at:
-  https://github.com/adafruit/Adafruit_Si5351_Library/
+library at: https://github.com/adafruit/Adafruit_Si5351_Library/
 
 * Author(s): Tony DiCola
 """
