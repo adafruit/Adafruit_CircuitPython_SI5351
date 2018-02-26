@@ -426,7 +426,7 @@ class SI5351:
 
     @outputs_enabled.setter
     def outputs_enabled(self, val):
-        if val:
+        if not val:
             self._write_u8(_SI5351_REGISTER_3_OUTPUT_ENABLE_CONTROL, 0xFF)
         else:
             self._write_u8(_SI5351_REGISTER_3_OUTPUT_ENABLE_CONTROL, 0x00)
