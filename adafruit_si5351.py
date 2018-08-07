@@ -257,6 +257,8 @@ class SI5351:
             base_frequency = self._pll.frequency / self._divider
             # And add a further division for the R divider if set.
             r_divider = self.r_divider
+            # pylint: disable=no-else-return
+            # Disable should be removed when refactor can be tested.
             if r_divider == R_DIV_1:
                 return base_frequency
             elif r_divider == R_DIV_2:
