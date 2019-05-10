@@ -3,6 +3,6 @@ Simple test
 
 Ensure your device works with this simple test.
 
-.. literalinclude:: ../examples/simpletest.py
-    :caption: examples/simpletest.py
+.. literalinclude:: ../examples/si5351_simpletest.py
+    :caption: examples/si5351_simpletest.py
     :linenos:
