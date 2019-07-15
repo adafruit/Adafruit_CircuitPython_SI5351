@@ -211,7 +211,7 @@ class SI5351:
             susceptible to jitter but allows a larger range of PLL frequencies.
             """
             assert 14 < multiplier < 91
-            assert 0 < denominator < 0xFFFFF  # Prevent divide by zero.
+            assert 0 < denominator <= 0xFFFFF  # Prevent divide by zero.
             assert 0 <= numerator < 0xFFFFF
             multiplier = int(multiplier)
             numerator = int(numerator)
@@ -295,7 +295,7 @@ class SI5351:
 
         @r_divider.setter
         def r_divider(self, divider):
-            assert 0 <= divider <= 6
+            assert 0 <= divider <= 7
             reg_value = self._si5351._read_u8(self._r)
             reg_value &= 0x0F
             divider &= 0x07
@@ -347,7 +347,7 @@ class SI5351:
             accurate but has a wider range of output frequencies.
             """
             assert 3 < divider < 901
-            assert 0 < denominator < 0xFFFFF  # Prevent divide by zero.
+            assert 0 < denominator <= 0xFFFFF  # Prevent divide by zero.
             assert 0 <= numerator < 0xFFFFF
             divider = int(divider)
             numerator = int(numerator)
