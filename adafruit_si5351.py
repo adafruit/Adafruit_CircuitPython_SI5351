@@ -29,8 +29,6 @@ library at: https://github.com/adafruit/Adafruit_Si5351_Library/
 
 * Author(s): Tony DiCola
 """
-import math
-
 from micropython import const
 
 import adafruit_bus_device.i2c_device as i2c_device
