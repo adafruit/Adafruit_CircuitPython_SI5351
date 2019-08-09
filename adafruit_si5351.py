@@ -44,7 +44,7 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_SI5351.git"
 # Internal constants:
 _SI5351_ADDRESS             = const(0x60)  # Assumes ADDR pin = low
 _SI5351_READBIT             = const(0x01)
-_SI5351_CRYSTAL_FREQUENCY   = 25000000.0   # Fixed 25mhz crystal on board.
+_SI5351_CRYSTAL_FREQUENCY   = 25000000     # Fixed 25mhz crystal on board.
 _SI5351_REGISTER_0_DEVICE_STATUS                        = const(0)
 _SI5351_REGISTER_1_INTERRUPT_STATUS_STICKY              = const(1)
 _SI5351_REGISTER_2_INTERRUPT_STATUS_MASK                = const(2)
@@ -199,10 +199,6 @@ class SI5351:
             self._configure_registers(p1, p2, p3)
             # Calculate exact frequency and store it for reference.
             fvco = _SI5351_CRYSTAL_FREQUENCY * multiplier
-            # This should actually take the floor to get the true value but
-            # there's a limit on how big a value the floor can be and it's
-            # easy to hit with high megahertz frequencies:
-            #   https://github.com/adafruit/circuitpython/issues/572
             self._frequency = fvco
 
         def configure_fractional(self, multiplier, numerator, denominator):
@@ -217,18 +213,16 @@ class SI5351:
             numerator = int(numerator)
             denominator = int(denominator)
             # Compute register values and configure them.
-            p1 = int(128 * multiplier + math.floor(128 * \
-                     ((numerator/denominator)) - 512))
-            p2 = int(128 * numerator - denominator * math.floor(128 * \
-                     (numerator/denominator)))
+            # Integer division removes need for floor function
+            t = 128 * numerator // denominator
+            p1 = 128 * multiplier + t - 512
+            p2 = 128 * numerator - denominator * t
             p3 = denominator
             self._configure_registers(p1, p2, p3)
-            # Calculate exact frequency and store it for reference.
-            fvco = _SI5351_CRYSTAL_FREQUENCY * (multiplier + (numerator / denominator))
-            # This should actually take the floor to get the true value but
-            # there's a limit on how big a value the floor can be and it's
-            # easy to hit with high megahertz frequencies:
-            #   https://github.com/adafruit/circuitpython/issues/572
+            # Calculate frequency rounded down to nearest Hz
+            # Rounding introduces an error of < 2ppb as fvco is > 500MHz
+            fvco = _SI5351_CRYSTAL_FREQUENCY * multiplier + \
+                _SI5351_CRYSTAL_FREQUENCY * numerator // denominator
             self._frequency = fvco
 
     # Another internal class to represent each clock output.  There are 3 of
@@ -243,6 +237,7 @@ class SI5351:
             self._r = r_register
             self._pll = None
             self._divider = None
+            self._scale_factor = None
 
         @property
         def frequency(self):
@@ -251,32 +246,13 @@ class SI5351:
             """
             # Make sure a PLL and divider are present, i.e. this clock has
             # been configured, otherwise return nothing.
-            if self._pll is None or self._divider is None:
+            if self._pll is None or self._divider is None or self._scale_factor is None:
                 return None
-            # Now calculate frequency as PLL freuqency divided by clock divider.
-            base_frequency = self._pll.frequency / self._divider
-            # And add a further division for the R divider if set.
-            r_divider = self.r_divider
-            # pylint: disable=no-else-return
-            # Disable should be removed when refactor can be tested.
-            if r_divider == R_DIV_1:
-                return base_frequency
-            elif r_divider == R_DIV_2:
-                return base_frequency/2
-            elif r_divider == R_DIV_4:
-                return base_frequency/4
-            elif r_divider == R_DIV_8:
-                return base_frequency/8
-            elif r_divider == R_DIV_16:
-                return base_frequency/16
-            elif r_divider == R_DIV_32:
-                return base_frequency/32
-            elif r_divider == R_DIV_64:
-                return base_frequency/64
-            elif r_divider == R_DIV_128:
-                return base_frequency/128
-            else:
-                raise RuntimeError('Unexpected R divider!')
+
+            # Now calculate frequency rounded to nearest Hz
+            divider = self._divider << self.r_divider
+            base_frequency = (self._pll.frequency * self._scale_factor + (divider >> 1)) // divider
+            return base_frequency
 
         @property
         def r_divider(self):
@@ -339,6 +315,7 @@ class SI5351:
             # Store the PLL and divisor value so frequency can be calculated.
             self._pll = pll
             self._divider = divider
+            self._scale_factor = 1
 
         def configure_fractional(self, pll, divider, numerator, denominator):
             """Configure the clock output with the specified PLL source
@@ -355,8 +332,10 @@ class SI5351:
             # Make sure the PLL is configured (has a frequency set).
             assert pll.frequency is not None
             # Compute MSx register values.
-            p1 = int(128 * divider + math.floor(128 * (numerator/denominator)) - 512)
-            p2 = int(128 * numerator - denominator * math.floor(128 * (numerator/denominator)))
+            # Integer division removes need for floor function
+            t = 128 * numerator // denominator
+            p1 = 128 * divider + t - 512
+            p2 = 128 * numerator - denominator * t
             p3 = denominator
             self._configure_registers(p1, p2, p3)
             # Configure the clock control register.
@@ -365,8 +344,11 @@ class SI5351:
             control |= pll.clock_control_enabled
             self._si5351._write_u8(self._control, control)
             # Store the PLL and divisor value so frequency can be calculated.
+            # We store the divisor as a fraction to maintain precision
+            # The stored value is scaled up by the denominator
             self._pll = pll
-            self._divider = divider + (numerator / denominator)
+            self._divider = divider * denominator + numerator
+            self._scale_factor = denominator
 
     # Class-level buffer to reduce allocations and heap fragmentation.
     # This is not thread-safe or re-entrant by design!
