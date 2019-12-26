@@ -9,8 +9,8 @@ Introduction
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_SI5351.svg?branch=master
-    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_SI5351
+.. image:: https://github.com/adafruit/Adafruit_CircuitPython_SI5351/workflows/Build%20CI/badge.svg
+    :target: https://github.com/adafruit/Adafruit_CircuitPython_SI5351/actions/
     :alt: Build Status
 
 SI5351 clock generator module.
