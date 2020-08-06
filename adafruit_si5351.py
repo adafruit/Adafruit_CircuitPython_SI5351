@@ -163,13 +163,15 @@ class SI5351:
         def __init__(self, si5351, base_address, clock_control_enabled):
             self._si5351 = si5351
             self._base = base_address
-            self._frequency = None
+            self._multiplier = None
             self.clock_control_enabled = clock_control_enabled
 
         @property
         def frequency(self):
             """Get the frequency of the PLL in hertz."""
-            return self._frequency
+            if self._multiplier is None:
+                return None
+            return self._multiplier * self._si5351.frequency
 
         def _configure_registers(self, p1, p2, p3):
             # Update PLL registers.
@@ -198,13 +200,7 @@ class SI5351:
             p2 = 0
             p3 = 1
             self._configure_registers(p1, p2, p3)
-            # Calculate exact frequency and store it for reference.
-            fvco = _SI5351_CRYSTAL_FREQUENCY * multiplier
-            # This should actually take the floor to get the true value but
-            # there's a limit on how big a value the floor can be and it's
-            # easy to hit with high megahertz frequencies:
-            #   https://github.com/adafruit/circuitpython/issues/572
-            self._frequency = fvco
+            self._multiplier = multiplier
 
         def configure_fractional(self, multiplier, numerator, denominator):
             """Configure the PLL with a fractional multipler specified by
@@ -227,13 +223,7 @@ class SI5351:
             )
             p3 = denominator
             self._configure_registers(p1, p2, p3)
-            # Calculate exact frequency and store it for reference.
-            fvco = _SI5351_CRYSTAL_FREQUENCY * (multiplier + (numerator / denominator))
-            # This should actually take the floor to get the true value but
-            # there's a limit on how big a value the floor can be and it's
-            # easy to hit with high megahertz frequencies:
-            #   https://github.com/adafruit/circuitpython/issues/572
-            self._frequency = fvco
+            self._multiplier = multiplier + (numerator / denominator)
 
     # Another internal class to represent each clock output.  There are 3 of
     # these and they can each be independently configured to use a specific
@@ -379,7 +369,8 @@ class SI5351:
     # This is not thread-safe or re-entrant by design!
     _BUFFER = bytearray(2)
 
-    def __init__(self, i2c, *, address=_SI5351_ADDRESS):
+    def __init__(self, i2c, *, address=_SI5351_ADDRESS, frequency=_SI5351_CRYSTAL_FREQUENCY):
+        self.frequency = frequency
         self._device = i2c_device.I2CDevice(i2c, address)
         # Setup the SI5351.
         # Disable all outputs setting CLKx_DIS high.
