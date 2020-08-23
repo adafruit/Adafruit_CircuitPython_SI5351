@@ -40,7 +40,6 @@ __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_SI5351.git"
 
 
-# pylint: disable=bad-whitespace
 # Internal constants:
 _SI5351_ADDRESS = const(0x60)  # Assumes ADDR pin = low
 _SI5351_READBIT = const(0x01)
@@ -130,7 +129,6 @@ R_DIV_16 = 4
 R_DIV_32 = 5
 R_DIV_64 = 6
 R_DIV_128 = 7
-# pylint: enable=bad-whitespace
 
 
 # Disable invalid name because p1, p2, p3 variables are false positives.
