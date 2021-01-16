@@ -1,24 +1,7 @@
-# The MIT License (MIT)
+# SPDX-FileCopyrightText: 2017 Tony DiCola for Adafruit Industries
 #
-# Copyright (c) 2017 Tony DiCola for Adafruit Industries
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# SPDX-License-Identifier: MIT
+
 """
 `adafruit_si5351`
 ====================================================
@@ -282,14 +265,14 @@ class SI5351:
         @property
         def r_divider(self):
             """Get and set the R divider value, must be one of:
-             - R_DIV_1: divider of 1
-             - R_DIV_2: divider of 2
-             - R_DIV_4: divider of 4
-             - R_DIV_8: divider of 8
-             - R_DIV_16: divider of 16
-             - R_DIV_32: divider of 32
-             - R_DIV_64: divider of 64
-             - R_DIV_128: divider of 128
+            - R_DIV_1: divider of 1
+            - R_DIV_2: divider of 2
+            - R_DIV_4: divider of 4
+            - R_DIV_8: divider of 8
+            - R_DIV_16: divider of 16
+            - R_DIV_32: divider of 32
+            - R_DIV_64: divider of 64
+            - R_DIV_128: divider of 128
             """
             reg_value = self._si5351._read_u8(self._r)
             return (reg_value >> 4) & 0x07
