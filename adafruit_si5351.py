@@ -306,7 +306,7 @@ class SI5351:
             divider.  This is the most accurate way to set the clock output
             frequency but supports less of a range of values.
             """
-            assert 3 < divider < 901
+            assert 3 < divider < 2049
             divider = int(divider)
             # Make sure the PLL is configured (has a frequency set).
             assert pll.frequency is not None
@@ -331,7 +331,7 @@ class SI5351:
             fractional divider with numerator/denominator.  Again this is less
             accurate but has a wider range of output frequencies.
             """
-            assert 3 < divider < 901
+            assert 3 < divider < 2049
             assert 0 < denominator <= 0xFFFFF  # Prevent divide by zero.
             assert 0 <= numerator < 0xFFFFF
             divider = int(divider)
