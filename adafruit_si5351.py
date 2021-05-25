@@ -196,7 +196,9 @@ class SI5351:
             if multiplier >= 91 or multiplier <= 14:
                 raise Exception("Multiplier must be in range 14 to 91.")
             if denominator > 0xFFFFF or denominator <= 0:  # Prevent divide by zero.
-                raise Exception("Denominator must be greater than 0 and less than 0xFFFFF.")
+                raise Exception(
+                    "Denominator must be greater than 0 and less than 0xFFFFF."
+                )
             if numerator >= 0xFFFFF or numerator < 0:
                 raise Exception("Numerator must be in range 0 to 0xFFFFF.")
             multiplier = int(multiplier)
@@ -341,7 +343,9 @@ class SI5351:
             if divider >= 2049 or divider <= 3:
                 raise Exception("Divider must be in range 3 to 2049.")
             if denominator > 0xFFFFF or denominator <= 0:  # Prevent divide by zero.
-                raise Exception("Denominator must be greater than 0 and less than 0xFFFFF.")
+                raise Exception(
+                    "Denominator must be greater than 0 and less than 0xFFFFF."
+                )
             if numerator >= 0xFFFFF or numerator < 0:
                 raise Exception("Numerator must be in range 0 to 0xFFFFF.")
             divider = int(divider)
