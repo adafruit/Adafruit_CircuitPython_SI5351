@@ -449,3 +449,14 @@ class SI5351:
             self._write_u8(_SI5351_REGISTER_3_OUTPUT_ENABLE_CONTROL, 0xFF)
         else:
             self._write_u8(_SI5351_REGISTER_3_OUTPUT_ENABLE_CONTROL, 0x00)
+        self.reset_plls()
+
+    def reset_plls(self):
+        """Reset both PLLs. This is required when the phase between clocks
+        needs to be non-random. 
+
+        See e.g.
+
+            https://groups.io/g/BITX20/topic/si5351a_facts_and_myths/5430607
+        """
+        self._write_u8(_SI5351_REGISTER_177_PLL_RESET, (1 << 7) | (1 << 5))
