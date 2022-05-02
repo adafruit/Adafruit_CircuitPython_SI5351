@@ -344,6 +344,7 @@ class SI5351:
             fractional divider with numerator/denominator.  Again this is less
             accurate but has a wider range of output frequencies.
             """
+            # pylint: disable=too-many-arguments
             if divider >= 2049 or divider <= 3:
                 raise Exception("Divider must be in range 3 to 2049.")
             if denominator > 0xFFFFF or denominator <= 0:  # Prevent divide by zero.
