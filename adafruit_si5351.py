@@ -307,7 +307,7 @@ class SI5351:
             self._si5351._write_u8(self._base + 6, (p2 & 0x0000FF00) >> 8)
             self._si5351._write_u8(self._base + 7, (p2 & 0x000000FF))
 
-        def configure_integer(self, pll, divider):
+        def configure_integer(self, pll, divider, inverted=False):
             """Configure the clock output with the specified PLL source
             (should be a PLL instance on the SI5351 class) and specific integer
             divider.  This is the most accurate way to set the clock output
@@ -329,12 +329,16 @@ class SI5351:
             # Clock not inverted, powered up
             control |= pll.clock_control_enabled
             control |= 1 << 6  # Enable integer mode.
+            if inverted:
+                control |= 0b00010000 # Bit 4 of the control register = CLKx_INV
+            else:
+                control &= 0b11101111 # Make sure to turn it off if not inverted            
             self._si5351._write_u8(self._control, control)
             # Store the PLL and divisor value so frequency can be calculated.
             self._pll = pll
             self._divider = divider
 
-        def configure_fractional(self, pll, divider, numerator, denominator):
+        def configure_fractional(self, pll, divider, numerator, denominator, inverted=False):
             """Configure the clock output with the specified PLL source
             (should be a PLL instance on the SI5351 class) and specifiec
             fractional divider with numerator/denominator.  Again this is less
@@ -366,6 +370,10 @@ class SI5351:
             control = 0x0F  # 8mA drive strength, MS0 as CLK0 source,
             # Clock not inverted, powered up
             control |= pll.clock_control_enabled
+            if inverted:
+                control |= 0b00010000 # Bit 4 of the control register = CLKx_INV
+            else:
+                control &= 0b11101111 # Make sure to turn it off if not inverted
             self._si5351._write_u8(self._control, control)
             # Store the PLL and divisor value so frequency can be calculated.
             self._pll = pll
