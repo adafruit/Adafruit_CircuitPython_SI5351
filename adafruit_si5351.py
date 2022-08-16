@@ -19,7 +19,7 @@ from micropython import const
 from adafruit_bus_device import i2c_device
 
 
-__version__ = "0.0.0-auto.0"
+__version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_SI5351.git"
 
 
