@@ -18,6 +18,11 @@ from micropython import const
 
 from adafruit_bus_device import i2c_device
 
+try:
+    import typing  # pylint: disable=unused-import
+    from busio import I2C
+except ImportError:
+    pass
 
 __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_SI5351.git"
@@ -141,18 +146,20 @@ class SI5351:
     # of this, PLL A and PLL B.  Each can be the source for a clock output
     # (with further division performed per clock output).
     class _PLL:
-        def __init__(self, si5351, base_address, clock_control_enabled):
+        def __init__(
+            self, si5351: "SI5351", base_address: int, clock_control_enabled: bool
+        ) -> None:
             self._si5351 = si5351
             self._base = base_address
             self._frequency = None
             self.clock_control_enabled = clock_control_enabled
 
         @property
-        def frequency(self):
+        def frequency(self) -> int:
             """Get the frequency of the PLL in hertz."""
             return self._frequency
 
-        def _configure_registers(self, p1, p2, p3):
+        def _configure_registers(self, p1: int, p2: int, p3: int) -> None:
             # Update PLL registers.
             # The datasheet is a nightmare of typos and inconsistencies here!
             self._si5351._write_u8(self._base, (p3 & 0x0000FF00) >> 8)
@@ -168,7 +175,7 @@ class SI5351:
             # Reset both PLLs.
             self._si5351._write_u8(_SI5351_REGISTER_177_PLL_RESET, (1 << 7) | (1 << 5))
 
-        def configure_integer(self, multiplier):
+        def configure_integer(self, multiplier: int) -> None:
             """Configure the PLL with a simple integer multiplier for the most
             accurate (but more limited) PLL frequency generation.
             """
@@ -188,8 +195,10 @@ class SI5351:
             #   https://github.com/adafruit/circuitpython/issues/572
             self._frequency = fvco
 
-        def configure_fractional(self, multiplier, numerator, denominator):
-            """Configure the PLL with a fractional multipler specified by
+        def configure_fractional(
+            self, multiplier: int, numerator: int, denominator: int
+        ) -> None:
+            """Configure the PLL with a fractional multiplier specified by
             multiplier and numerator/denominator.  This is less accurate and
             susceptible to jitter but allows a larger range of PLL frequencies.
             """
@@ -226,7 +235,13 @@ class SI5351:
     # these and they can each be independently configured to use a specific
     # PLL source and have their own divider on that PLL.
     class _Clock:
-        def __init__(self, si5351, base_address, control_register, r_register):
+        def __init__(
+            self,
+            si5351: "SI5351",
+            base_address: int,
+            control_register: int,
+            r_register: int,
+        ) -> None:
             self._si5351 = si5351
             self._base = base_address
             self._control = control_register
@@ -235,7 +250,7 @@ class SI5351:
             self._divider = None
 
         @property
-        def frequency(self):
+        def frequency(self) -> float:
             """Get the frequency of this clock output in hertz.  This is
             computed based on the configured PLL, clock divider, and R divider.
             """
@@ -269,7 +284,7 @@ class SI5351:
                 raise RuntimeError("Unexpected R divider!")
 
         @property
-        def r_divider(self):
+        def r_divider(self) -> int:
             """Get and set the R divider value, must be one of:
             - R_DIV_1: divider of 1
             - R_DIV_2: divider of 2
@@ -284,7 +299,7 @@ class SI5351:
             return (reg_value >> 4) & 0x07
 
         @r_divider.setter
-        def r_divider(self, divider):
+        def r_divider(self, divider: int) -> None:
             if divider > 7 or divider < 0:
                 raise Exception("Divider must in range 0 to 7.")
             reg_value = self._si5351._read_u8(self._r)
@@ -294,7 +309,7 @@ class SI5351:
             reg_value |= divider
             self._si5351._write_u8(self._r, reg_value)
 
-        def _configure_registers(self, p1, p2, p3):
+        def _configure_registers(self, p1: int, p2: int, p3: int) -> None:
             # Update MSx registers.
             self._si5351._write_u8(self._base, (p3 & 0x0000FF00) >> 8)
             self._si5351._write_u8(self._base + 1, (p3 & 0x000000FF))
@@ -307,7 +322,9 @@ class SI5351:
             self._si5351._write_u8(self._base + 6, (p2 & 0x0000FF00) >> 8)
             self._si5351._write_u8(self._base + 7, (p2 & 0x000000FF))
 
-        def configure_integer(self, pll, divider, inverted=False):
+        def configure_integer(
+            self, pll: "PLL", divider: int, inverted: bool = False
+        ) -> None:
             """Configure the clock output with the specified PLL source
             (should be a PLL instance on the SI5351 class) and specific integer
             divider.  This is the most accurate way to set the clock output
@@ -339,10 +356,15 @@ class SI5351:
             self._divider = divider
 
         def configure_fractional(
-            self, pll, divider, numerator, denominator, inverted=False
-        ):
+            self,
+            pll: "PLL",
+            divider: int,
+            numerator: int,
+            denominator: int,
+            inverted: bool = False,
+        ) -> None:
             """Configure the clock output with the specified PLL source
-            (should be a PLL instance on the SI5351 class) and specifiec
+            (should be a PLL instance on the SI5351 class) and specific
             fractional divider with numerator/denominator.  Again this is less
             accurate but has a wider range of output frequencies.
             """
@@ -386,7 +408,7 @@ class SI5351:
     # This is not thread-safe or re-entrant by design!
     _BUFFER = bytearray(2)
 
-    def __init__(self, i2c, *, address=_SI5351_ADDRESS):
+    def __init__(self, i2c: I2C, *, address: int = _SI5351_ADDRESS) -> None:
         self._device = i2c_device.I2CDevice(i2c, address)
         # Setup the SI5351.
         # Disable all outputs setting CLKx_DIS high.
@@ -423,7 +445,7 @@ class SI5351:
             _SI5351_REGISTER_60_MULTISYNTH2_PARAMETERS_3,
         )
 
-    def _read_u8(self, address):
+    def _read_u8(self, address: int) -> int:
         # Read an 8-bit unsigned value from the specified 8-bit address.
         with self._device as i2c:
             self._BUFFER[0] = address & 0xFF
@@ -431,7 +453,7 @@ class SI5351:
             i2c.readinto(self._BUFFER, end=1)
         return self._BUFFER[0]
 
-    def _write_u8(self, address, val):
+    def _write_u8(self, address: int, val: int) -> None:
         # Write an 8-bit unsigned value to the specified 8-bit address.
         with self._device as i2c:
             self._BUFFER[0] = address & 0xFF
@@ -439,7 +461,7 @@ class SI5351:
             i2c.write(self._BUFFER, end=2)
 
     @property
-    def outputs_enabled(self):
+    def outputs_enabled(self) -> bool:
         """Get and set the enabled state of all clock outputs as a boolean.
         If true then all clock outputs are enabled, and if false then they are
         all disabled.
@@ -447,14 +469,14 @@ class SI5351:
         return self._read_u8(_SI5351_REGISTER_3_OUTPUT_ENABLE_CONTROL) == 0xFF
 
     @outputs_enabled.setter
-    def outputs_enabled(self, val):
+    def outputs_enabled(self, val: bool) -> None:
         if not val:
             self._write_u8(_SI5351_REGISTER_3_OUTPUT_ENABLE_CONTROL, 0xFF)
         else:
             self._write_u8(_SI5351_REGISTER_3_OUTPUT_ENABLE_CONTROL, 0x00)
         self.reset_plls()
 
-    def reset_plls(self):
+    def reset_plls(self) -> None:
         """Reset both PLLs. This is required when the phase between clocks
         needs to be non-random.
 
