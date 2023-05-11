@@ -180,7 +180,7 @@ class SI5351:
             accurate (but more limited) PLL frequency generation.
             """
             if multiplier >= 91 or multiplier <= 14:
-                raise Exception("Multiplier must be in range 14 to 91.")
+                raise ValueError("Multiplier must be in range 14 to 91.")
             multiplier = int(multiplier)
             # Compute register values and configure them.
             p1 = 128 * multiplier - 512
@@ -203,13 +203,13 @@ class SI5351:
             susceptible to jitter but allows a larger range of PLL frequencies.
             """
             if multiplier >= 91 or multiplier <= 14:
-                raise Exception("Multiplier must be in range 14 to 91.")
+                raise ValueError("Multiplier must be in range 14 to 91.")
             if denominator > 0xFFFFF or denominator <= 0:  # Prevent divide by zero.
-                raise Exception(
+                raise ValueError(
                     "Denominator must be greater than 0 and less than 0xFFFFF."
                 )
             if numerator >= 0xFFFFF or numerator < 0:
-                raise Exception("Numerator must be in range 0 to 0xFFFFF.")
+                raise ValueError("Numerator must be in range 0 to 0xFFFFF.")
             multiplier = int(multiplier)
             numerator = int(numerator)
             denominator = int(denominator)
@@ -301,7 +301,7 @@ class SI5351:
         @r_divider.setter
         def r_divider(self, divider: int) -> None:
             if divider > 7 or divider < 0:
-                raise Exception("Divider must in range 0 to 7.")
+                raise ValueError("Divider must in range 0 to 7.")
             reg_value = self._si5351._read_u8(self._r)
             reg_value &= 0x0F
             divider &= 0x07
@@ -331,11 +331,11 @@ class SI5351:
             frequency but supports less of a range of values.
             """
             if divider >= 2049 or divider <= 3:
-                raise Exception("Divider must be in range 3 to 2049.")
+                raise ValueError("Divider must be in range 3 to 2049.")
             divider = int(divider)
             # Make sure the PLL is configured (has a frequency set).
             if pll.frequency is None:
-                raise Exception("PLL must be configured.")
+                raise RuntimeError("PLL must be configured.")
             # Compute MSx register values.
             p1 = 128 * divider - 512
             p2 = 0
@@ -370,19 +370,19 @@ class SI5351:
             """
             # pylint: disable=too-many-arguments
             if divider >= 2049 or divider <= 3:
-                raise Exception("Divider must be in range 3 to 2049.")
+                raise ValueError("Divider must be in range 3 to 2049.")
             if denominator > 0xFFFFF or denominator <= 0:  # Prevent divide by zero.
-                raise Exception(
+                raise ValueError(
                     "Denominator must be greater than 0 and less than 0xFFFFF."
                 )
             if numerator >= 0xFFFFF or numerator < 0:
-                raise Exception("Numerator must be in range 0 to 0xFFFFF.")
+                raise ValueError("Numerator must be in range 0 to 0xFFFFF.")
             divider = int(divider)
             numerator = int(numerator)
             denominator = int(denominator)
             # Make sure the PLL is configured (has a frequency set).
             if pll.frequency is None:
-                raise Exception("PLL must be configured.")
+                raise RuntimeError("PLL must be configured.")
             # Compute MSx register values.
             p1 = int(128 * divider + math.floor(128 * (numerator / denominator)) - 512)
             p2 = int(
