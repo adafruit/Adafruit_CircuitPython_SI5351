@@ -165,13 +165,13 @@ class SI5351:
                 buf = self._si5351._BUFFER
                 buf[0] = self._base
                 buf[1] = (p3 & 0x0000FF00) >> 8
-                buf[2] = (p3 & 0x000000FF)
+                buf[2] = p3 & 0x000000FF
                 buf[3] = (p1 & 0x00030000) >> 16
                 buf[4] = (p1 & 0x0000FF00) >> 8
-                buf[5] = (p1 & 0x000000FF)
+                buf[5] = p1 & 0x000000FF
                 buf[6] = ((p3 & 0x000F0000) >> 12) | ((p2 & 0x000F0000) >> 16)
                 buf[7] = (p2 & 0x0000FF00) >> 8
-                buf[8] = (p2 & 0x000000FF)
+                buf[8] = p2 & 0x000000FF
                 i2c.write(buf, end=9)
             # Reset both PLLs.
             self._si5351._write_u8(_SI5351_REGISTER_177_PLL_RESET, (1 << 7) | (1 << 5))
@@ -316,13 +316,13 @@ class SI5351:
                 buf = self._si5351._BUFFER
                 buf[0] = self._base
                 buf[1] = (p3 & 0x0000FF00) >> 8
-                buf[2] = (p3 & 0x000000FF)
+                buf[2] = p3 & 0x000000FF
                 buf[3] = (p1 & 0x00030000) >> 16
                 buf[4] = (p1 & 0x0000FF00) >> 8
-                buf[5] = (p1 & 0x000000FF)
+                buf[5] = p1 & 0x000000FF
                 buf[6] = ((p3 & 0x000F0000) >> 12) | ((p2 & 0x000F0000) >> 16)
                 buf[7] = (p2 & 0x0000FF00) >> 8
-                buf[8] = (p2 & 0x000000FF)
+                buf[8] = p2 & 0x000000FF
                 i2c.write(buf, end=9)
 
         def configure_integer(
@@ -419,11 +419,11 @@ class SI5351:
         # Power down all output drivers
         # Class-level buffer to reduce allocations and heap fragmentation.
         # This is not thread-safe or re-entrant by design!
-        with self._device as i2c:
+        with self._device as i2c_bus:
             self._BUFFER[0] = _SI5351_REGISTER_16_CLK0_CONTROL
-            for i in range(1,9):
+            for i in range(1, 9):
                 self._BUFFER[i] = 0x80
-            i2c.write(self._BUFFER, end=9)
+            i2c_bus.write(self._BUFFER, end=9)
         # Initialize PLL A and B objects.
         self.pll_a = self._PLL(self, 26, 0)
         self.pll_b = self._PLL(self, 34, (1 << 5))
