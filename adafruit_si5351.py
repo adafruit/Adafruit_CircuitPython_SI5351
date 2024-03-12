@@ -161,17 +161,18 @@ class SI5351:
 
         def _configure_registers(self, p1: int, p2: int, p3: int) -> None:
             # Update PLL registers.
-            # The datasheet is a nightmare of typos and inconsistencies here!
-            self._si5351._write_u8(self._base, (p3 & 0x0000FF00) >> 8)
-            self._si5351._write_u8(self._base + 1, (p3 & 0x000000FF))
-            self._si5351._write_u8(self._base + 2, (p1 & 0x00030000) >> 16)
-            self._si5351._write_u8(self._base + 3, (p1 & 0x0000FF00) >> 8)
-            self._si5351._write_u8(self._base + 4, (p1 & 0x000000FF))
-            self._si5351._write_u8(
-                self._base + 5, ((p3 & 0x000F0000) >> 12) | ((p2 & 0x000F0000) >> 16)
-            )
-            self._si5351._write_u8(self._base + 6, (p2 & 0x0000FF00) >> 8)
-            self._si5351._write_u8(self._base + 7, (p2 & 0x000000FF))
+            with self._si5351._device as i2c:
+                buf = self._si5351._BUFFER
+                buf[0] = self._base
+                buf[1] = (p3 & 0x0000FF00) >> 8
+                buf[2] = (p3 & 0x000000FF)
+                buf[3] = (p1 & 0x00030000) >> 16
+                buf[4] = (p1 & 0x0000FF00) >> 8
+                buf[5] = (p1 & 0x000000FF)
+                buf[6] = ((p3 & 0x000F0000) >> 12) | ((p2 & 0x000F0000) >> 16)
+                buf[7] = (p2 & 0x0000FF00) >> 8
+                buf[8] = (p2 & 0x000000FF)
+                i2c.write(buf, end=9)
             # Reset both PLLs.
             self._si5351._write_u8(_SI5351_REGISTER_177_PLL_RESET, (1 << 7) | (1 << 5))
 
@@ -311,16 +312,18 @@ class SI5351:
 
         def _configure_registers(self, p1: int, p2: int, p3: int) -> None:
             # Update MSx registers.
-            self._si5351._write_u8(self._base, (p3 & 0x0000FF00) >> 8)
-            self._si5351._write_u8(self._base + 1, (p3 & 0x000000FF))
-            self._si5351._write_u8(self._base + 2, (p1 & 0x00030000) >> 16)
-            self._si5351._write_u8(self._base + 3, (p1 & 0x0000FF00) >> 8)
-            self._si5351._write_u8(self._base + 4, (p1 & 0x000000FF))
-            self._si5351._write_u8(
-                self._base + 5, ((p3 & 0x000F0000) >> 12) | ((p2 & 0x000F0000) >> 16)
-            )
-            self._si5351._write_u8(self._base + 6, (p2 & 0x0000FF00) >> 8)
-            self._si5351._write_u8(self._base + 7, (p2 & 0x000000FF))
+            with self._si5351._device as i2c:
+                buf = self._si5351._BUFFER
+                buf[0] = self._base
+                buf[1] = (p3 & 0x0000FF00) >> 8
+                buf[2] = (p3 & 0x000000FF)
+                buf[3] = (p1 & 0x00030000) >> 16
+                buf[4] = (p1 & 0x0000FF00) >> 8
+                buf[5] = (p1 & 0x000000FF)
+                buf[6] = ((p3 & 0x000F0000) >> 12) | ((p2 & 0x000F0000) >> 16)
+                buf[7] = (p2 & 0x0000FF00) >> 8
+                buf[8] = (p2 & 0x000000FF)
+                i2c.write(buf, end=9)
 
         def configure_integer(
             self, pll: "PLL", divider: int, inverted: bool = False
@@ -406,7 +409,7 @@ class SI5351:
 
     # Class-level buffer to reduce allocations and heap fragmentation.
     # This is not thread-safe or re-entrant by design!
-    _BUFFER = bytearray(2)
+    _BUFFER = bytearray(9)
 
     def __init__(self, i2c: I2C, *, address: int = _SI5351_ADDRESS) -> None:
         self._device = i2c_device.I2CDevice(i2c, address)
@@ -414,14 +417,13 @@ class SI5351:
         # Disable all outputs setting CLKx_DIS high.
         self._write_u8(_SI5351_REGISTER_3_OUTPUT_ENABLE_CONTROL, 0xFF)
         # Power down all output drivers
-        self._write_u8(_SI5351_REGISTER_16_CLK0_CONTROL, 0x80)
-        self._write_u8(_SI5351_REGISTER_17_CLK1_CONTROL, 0x80)
-        self._write_u8(_SI5351_REGISTER_18_CLK2_CONTROL, 0x80)
-        self._write_u8(_SI5351_REGISTER_19_CLK3_CONTROL, 0x80)
-        self._write_u8(_SI5351_REGISTER_20_CLK4_CONTROL, 0x80)
-        self._write_u8(_SI5351_REGISTER_21_CLK5_CONTROL, 0x80)
-        self._write_u8(_SI5351_REGISTER_22_CLK6_CONTROL, 0x80)
-        self._write_u8(_SI5351_REGISTER_23_CLK7_CONTROL, 0x80)
+        # Class-level buffer to reduce allocations and heap fragmentation.
+        # This is not thread-safe or re-entrant by design!
+        with self._device as i2c:
+            self._BUFFER[0] = _SI5351_REGISTER_16_CLK0_CONTROL
+            for i in range(1,9):
+                self._BUFFER[i] = 0x80
+            i2c.write(self._BUFFER, end=9)
         # Initialize PLL A and B objects.
         self.pll_a = self._PLL(self, 26, 0)
         self.pll_b = self._PLL(self, 34, (1 << 5))
