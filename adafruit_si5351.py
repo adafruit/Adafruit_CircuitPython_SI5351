@@ -12,14 +12,15 @@ library at: https://github.com/adafruit/Adafruit_Si5351_Library/
 
 * Author(s): Tony DiCola
 """
+
 import math
 
+from adafruit_bus_device import i2c_device
 from micropython import const
 
-from adafruit_bus_device import i2c_device
-
 try:
-    import typing  # pylint: disable=unused-import
+    import typing
+
     from busio import I2C
 except ImportError:
     pass
@@ -122,16 +123,13 @@ R_DIV_128 = 7
 # Disable invalid name because p1, p2, p3 variables are false positives.
 # These are legitimate register names and adding more characters obfuscates
 # the intention of the code.
-# pylint: disable=invalid-name
 
 # Disable protected access warning because inner classes by design need and use
 # access to protected members.
-# pylint: disable=protected-access
 
 # Another silly pylint check to disable, it has no context of the complexity
 # of R divider values and explicit unrolling of them into multiple if cases
 # and return statements.  Disable.
-# pylint: disable=too-many-return-statements
 
 
 class SI5351:
@@ -196,9 +194,7 @@ class SI5351:
             #   https://github.com/adafruit/circuitpython/issues/572
             self._frequency = fvco
 
-        def configure_fractional(
-            self, multiplier: int, numerator: int, denominator: int
-        ) -> None:
+        def configure_fractional(self, multiplier: int, numerator: int, denominator: int) -> None:
             """Configure the PLL with a fractional multiplier specified by
             multiplier and numerator/denominator.  This is less accurate and
             susceptible to jitter but allows a larger range of PLL frequencies.
@@ -206,22 +202,15 @@ class SI5351:
             if multiplier >= 91 or multiplier <= 14:
                 raise ValueError("Multiplier must be in range 14 to 91.")
             if denominator > 0xFFFFF or denominator <= 0:  # Prevent divide by zero.
-                raise ValueError(
-                    "Denominator must be greater than 0 and less than 0xFFFFF."
-                )
+                raise ValueError("Denominator must be greater than 0 and less than 0xFFFFF.")
             if numerator >= 0xFFFFF or numerator < 0:
                 raise ValueError("Numerator must be in range 0 to 0xFFFFF.")
             multiplier = int(multiplier)
             numerator = int(numerator)
             denominator = int(denominator)
             # Compute register values and configure them.
-            p1 = int(
-                128 * multiplier + math.floor(128 * ((numerator / denominator)) - 512)
-            )
-            p2 = int(
-                128 * numerator
-                - denominator * math.floor(128 * (numerator / denominator))
-            )
+            p1 = int(128 * multiplier + math.floor(128 * (numerator / denominator) - 512))
+            p2 = int(128 * numerator - denominator * math.floor(128 * (numerator / denominator)))
             p3 = denominator
             self._configure_registers(p1, p2, p3)
             # Calculate exact frequency and store it for reference.
@@ -251,7 +240,7 @@ class SI5351:
             self._divider = None
 
         @property
-        def frequency(self) -> float:
+        def frequency(self) -> float:  # noqa: PLR0911
             """Get the frequency of this clock output in hertz.  This is
             computed based on the configured PLL, clock divider, and R divider.
             """
@@ -263,7 +252,6 @@ class SI5351:
             base_frequency = self._pll.frequency / self._divider
             # And add a further division for the R divider if set.
             r_divider = self.r_divider
-            # pylint: disable=no-else-return
             # Disable should be removed when refactor can be tested.
             if r_divider == R_DIV_1:
                 return base_frequency
@@ -325,9 +313,7 @@ class SI5351:
                 buf[8] = p2 & 0x000000FF
                 i2c.write(buf, end=9)
 
-        def configure_integer(
-            self, pll: "PLL", divider: int, inverted: bool = False
-        ) -> None:
+        def configure_integer(self, pll: "PLL", divider: int, inverted: bool = False) -> None:
             """Configure the clock output with the specified PLL source
             (should be a PLL instance on the SI5351 class) and specific integer
             divider.  This is the most accurate way to set the clock output
@@ -371,13 +357,10 @@ class SI5351:
             fractional divider with numerator/denominator.  Again this is less
             accurate but has a wider range of output frequencies.
             """
-            # pylint: disable=too-many-arguments
             if divider >= 2049 or divider <= 3:
                 raise ValueError("Divider must be in range 3 to 2049.")
             if denominator > 0xFFFFF or denominator <= 0:  # Prevent divide by zero.
-                raise ValueError(
-                    "Denominator must be greater than 0 and less than 0xFFFFF."
-                )
+                raise ValueError("Denominator must be greater than 0 and less than 0xFFFFF.")
             if numerator >= 0xFFFFF or numerator < 0:
                 raise ValueError("Numerator must be in range 0 to 0xFFFFF.")
             divider = int(divider)
@@ -388,10 +371,7 @@ class SI5351:
                 raise RuntimeError("PLL must be configured.")
             # Compute MSx register values.
             p1 = int(128 * divider + math.floor(128 * (numerator / denominator)) - 512)
-            p2 = int(
-                128 * numerator
-                - denominator * math.floor(128 * (numerator / denominator))
-            )
+            p2 = int(128 * numerator - denominator * math.floor(128 * (numerator / denominator)))
             p3 = denominator
             self._configure_registers(p1, p2, p3)
             # Configure the clock control register.
